@@ -373,7 +373,7 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
           <button class="btn btn-ghost" onclick="descargarExcel()">Descargar Excel</button>
           <button class="btn btn-danger" onclick="confirmar('¿Borrar los datos de este dispositivo?','Se borran los temas guardados en este celular o computadora. Lo que está en Google Sheets no se toca y vuelve a bajar al sincronizar.','Borrar',borrarLocal)">Borrar datos de este dispositivo</button>
         </div>
-        <div class="ver">Versión 3.1</div>
+        <div class="ver">Versión 3.2</div>
       </div>
     </div>
   </section>
@@ -688,7 +688,12 @@ try{aplicarTema();}catch(e){}
 loadDB();
 go('seg');
 loadFromSheets(false);
-if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+if('serviceWorker' in navigator){
+  // Cuando se activa una versión nueva del service worker, recarga una sola vez para mostrarla
+  const habiaSW=!!navigator.serviceWorker.controller;let recargado=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(habiaSW&&!recargado){recargado=true;location.reload();}});
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{});});
+}
 </script>
 </body>
 </html>
