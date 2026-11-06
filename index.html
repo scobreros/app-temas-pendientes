@@ -142,6 +142,8 @@ main{max-width:1180px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-
 .seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;}
 .seg button{border:none;background:none;padding:7px 11px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);}
 .seg button.on{background:var(--ink);color:var(--bg);}
+.seg-sm{padding:2px;border-radius:9px;}
+.seg-sm button{padding:4px 9px;font-size:12px;border-radius:7px;}
 .search{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:11px 12px 11px 38px;margin-bottom:10px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A9A95'%3E%3Cpath d='M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 14 15.5l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:11px center;background-size:18px;}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
 .chip-x{display:inline-flex;align-items:center;gap:6px;border:none;background:var(--ink);color:var(--bg);border-radius:20px;padding:6px 10px 6px 12px;font-size:12.5px;font-weight:600;}
@@ -287,12 +289,12 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
         </div>
 
         <div class="panel">
-          <h2>Abiertos por sucursal</h2>
+          <h2>Abiertos por sucursal <span class="seg seg-sm" id="ord-suc"><button data-o="cant" onclick="setOrden('suc','cant')">Cantidad</button><button data-o="az" onclick="setOrden('suc','az')">A–Z</button></span></h2>
           <div class="bars" id="bars-suc"></div>
         </div>
 
         <div class="panel">
-          <h2>Abiertos por sector</h2>
+          <h2>Abiertos por sector <span class="seg seg-sm" id="ord-sec"><button data-o="cant" onclick="setOrden('sec','cant')">Cantidad</button><button data-o="az" onclick="setOrden('sec','az')">A–Z</button></span></h2>
           <div class="bars" id="bars-sec"></div>
         </div>
       </div>
@@ -371,7 +373,7 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
           <button class="btn btn-ghost" onclick="descargarExcel()">Descargar Excel</button>
           <button class="btn btn-danger" onclick="confirmar('¿Borrar los datos de este dispositivo?','Se borran los temas guardados en este celular o computadora. Lo que está en Google Sheets no se toca y vuelve a bajar al sincronizar.','Borrar',borrarLocal)">Borrar datos de este dispositivo</button>
         </div>
-        <div class="ver">Versión 3.0</div>
+        <div class="ver">Versión 3.1</div>
       </div>
     </div>
   </section>
@@ -493,9 +495,10 @@ function renderSeg(){
 
   // Por sucursal (todas, incluso en cero) y por sector (solo con abiertos)
   const sucs=[...new Set([...DB.sucursales,...ab.map(t=>t.sucursal).filter(Boolean)])];
-  const bySuc=sucs.map(s=>[s,ab.filter(t=>t.sucursal===s).length]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  const bySuc=sucs.map(s=>[s,ab.filter(t=>t.sucursal===s).length]).sort(ordenar(ORD.suc));
   const secs=[...new Set([...DB.sectoresTP,...ab.map(t=>t.sector).filter(Boolean)])];
-  const bySec=secs.map(s=>[s,ab.filter(t=>t.sector===s).length]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  const bySec=secs.map(s=>[s,ab.filter(t=>t.sector===s).length]).filter(x=>x[1]>0).sort(ordenar(ORD.sec));
+  ['suc','sec'].forEach(k=>document.querySelectorAll('#ord-'+k+' button').forEach(b=>b.classList.toggle('on',b.dataset.o===ORD[k])));
   $('bars-suc').innerHTML=bars(bySuc,'sucursal');
   $('bars-sec').innerHTML=bySec.length?bars(bySec,'sector'):'<div class="hint" style="color:var(--muted);font-size:13px">Sin temas abiertos.</div>';
   renderList();
@@ -506,6 +509,10 @@ function bars(rows,tipo){
 }
 function setTramo(id){F.tramo=F.tramo===id?null:id;if(F.tramo)F.estado='abierto';renderSeg();irALista();}
 function setFiltro(tipo,val){F[tipo]=F[tipo]===val?null:val;if(F[tipo])F.estado='abierto';renderSeg();irALista();}
+// Orden de las listas por sucursal y por sector (se recuerda en el dispositivo)
+let ORD={suc:'cant',sec:'cant'};try{Object.assign(ORD,JSON.parse(localStorage.getItem('tp_orden')||'{}'));}catch(e){}
+function ordenar(modo){const az=(a,b)=>a[0].localeCompare(b[0],'es',{sensitivity:'base'});return modo==='az'?az:(a,b)=>b[1]-a[1]||az(a,b);}
+function setOrden(k,modo){ORD[k]=modo;try{localStorage.setItem('tp_orden',JSON.stringify(ORD));}catch(e){}renderSeg();}
 function setEstado(e){F.estado=e;if(e!=='abierto')F.tramo=null;renderSeg();}
 function quitar(k){F[k]=null;renderSeg();}
 function irALista(){if(window.innerWidth<900){const el=$('list-title');const y=el.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:y,behavior:'smooth'});}}
