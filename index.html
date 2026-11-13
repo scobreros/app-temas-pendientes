@@ -58,8 +58,8 @@ button{cursor:pointer;}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--bg);}
 .top-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px;}
 .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
-.brand-mark{width:30px;height:30px;border-radius:9px;background:var(--brand);display:grid;place-items:center;flex:none;}
-.brand-mark svg{width:18px;height:18px;fill:var(--brand-ink);}
+.brand-mark{width:34px;height:34px;flex:none;display:block;border-radius:8px;}
+.actions .btn{padding:13px 8px;white-space:nowrap;font-size:14.5px;gap:6px;}
 .brand h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;}
 .brand small{display:block;font-size:12px;color:var(--muted);font-weight:500;}
 .icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;height:36px;min-width:36px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);}
@@ -233,6 +233,16 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
 .ver{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;}
 
 @media (max-width:440px){#sync-txt{display:none;}}
+.modo{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;gap:3px;margin-bottom:12px;}
+.modo button{border:none;background:none;padding:10px 4px;border-radius:10px;font-size:14.5px;font-weight:600;color:var(--muted);}
+.modo button.on{background:var(--ink);color:var(--bg);font-weight:700;}
+.quick{display:flex;gap:8px;margin-bottom:14px;}
+.quick input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:12px;font-size:16px;}
+.quick .btn{padding:0;width:50px;flex:none;}
+.quick .btn svg{width:22px;height:22px;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.p-mio{background:var(--brand-soft);color:var(--brand);}
+@media (min-width:900px){.modo{max-width:400px;}}
 /* Desktop */
 @media (min-width:900px){
   .bnav{display:none;}
@@ -254,7 +264,7 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></div>
+      <img class="brand-mark" src="icon-192.png" alt="" width="34" height="34">
       <div><h1>Temas pendientes</h1><small>Sebastián · Operaciones</small></div>
     </div>
     <nav class="topnav" aria-label="Secciones">
@@ -270,13 +280,22 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
 <main>
   <!-- SEGUIMIENTO -->
   <section id="v-seg">
+    <div class="modo" role="tablist" aria-label="Qué temas ver">
+      <button data-m="suc" onclick="setModo('suc')">Sucursales</button>
+      <button data-m="mis" onclick="setModo('mis')">Mis temas</button>
+    </div>
+    <div class="quick hidden" id="quick">
+      <label class="sr" for="q-new">Nuevo tema propio</label>
+      <input id="q-new" type="text" maxlength="140" placeholder="Anotá un tema y tocá +" onkeydown="if(event.key==='Enter')agregarMio()">
+      <button class="btn btn-primary" onclick="agregarMio()" aria-label="Agregar tema"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button>
+    </div>
     <div class="seg-layout">
       <div class="seg-side">
         <div class="hero">
           <div class="hero-head">
             <p class="hero-count" id="h-count">0 <span>temas abiertos</span></p>
           </div>
-          <div class="hero-sub" id="h-sub">Antigüedad desde la fecha de carga. Tocá un tramo para filtrar.</div>
+          <div class="hero-sub" id="h-sub"></div>
           <div class="thermo" id="thermo"></div>
           <div class="legend" id="legend"></div>
         </div>
@@ -288,12 +307,12 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
           <div class="split-legend" id="split-legend"></div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="pan-suc">
           <h2>Abiertos por sucursal <span class="seg seg-sm" id="ord-suc"><button data-o="cant" onclick="setOrden('suc','cant')">Cantidad</button><button data-o="az" onclick="setOrden('suc','az')">A–Z</button></span></h2>
           <div class="bars" id="bars-suc"></div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="pan-sec">
           <h2>Abiertos por sector <span class="seg seg-sm" id="ord-sec"><button data-o="cant" onclick="setOrden('sec','cant')">Cantidad</button><button data-o="az" onclick="setOrden('sec','az')">A–Z</button></span></h2>
           <div class="bars" id="bars-sec"></div>
         </div>
@@ -373,7 +392,7 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
           <button class="btn btn-ghost" onclick="descargarExcel()">Descargar Excel</button>
           <button class="btn btn-danger" onclick="confirmar('¿Borrar los datos de este dispositivo?','Se borran los temas guardados en este celular o computadora. Lo que está en Google Sheets no se toca y vuelve a bajar al sincronizar.','Borrar',borrarLocal)">Borrar datos de este dispositivo</button>
         </div>
-        <div class="ver">Versión 3.2</div>
+        <div class="ver">Versión 4.0</div>
       </div>
     </div>
   </section>
@@ -382,7 +401,7 @@ details.hist summary{font-size:13px;font-weight:600;color:var(--muted);cursor:po
 <nav class="bnav" aria-label="Secciones">
   <div class="bnav-in">
     <button data-nav="seg" onclick="go('seg')"><svg viewBox="0 0 24 24"><path d="M4 19h16v2H4zM5 10h3v7H5zm5.5-5h3v12h-3zM16 13h3v4h-3z"/></svg>Seguimiento</button>
-    <button data-nav="nuevo" class="fab" onclick="go('nuevo')"><span class="circle"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></span>Nuevo</button>
+    <button data-nav="nuevo" class="fab" onclick="nuevoFab()"><span class="circle"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></span>Nuevo</button>
     <button data-nav="ajustes" onclick="go('ajustes')"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.7a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1L11 21h4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>Ajustes</button>
   </div>
 </nav>
@@ -473,10 +492,26 @@ function go(v){
 
 // ===== Seguimiento =====
 let F={estado:'abierto',sucursal:null,sector:null,tramo:null,q:''};
-function abiertos(){return temas().filter(t=>est(t)==='abierto');}
+// Mis temas: se guardan como un tema más, con sucursal "Personal" y sin sector
+const MIO='Personal';
+const esMio=t=>t.sucursal===MIO;
+let MODO='suc';try{if(localStorage.getItem('tp_modo')==='mis')MODO='mis';}catch(e){}
+function delModo(){return temas().filter(t=>MODO==='mis'?esMio(t):!esMio(t));}
+function abiertos(){return delModo().filter(t=>est(t)==='abierto');}
+function setModo(m){MODO=m;try{localStorage.setItem('tp_modo',m);}catch(e){}F={estado:'abierto',sucursal:null,sector:null,tramo:null,q:''};$('q').value='';renderSeg();}
+function agregarMio(){
+  const inp=$('q-new'),tema=inp.value.trim();if(!tema){inp.focus();return;}
+  const fecha=hoyISO();
+  const t={id:DB.nextId++,supervisor:SUPERVISOR,sucursal:MIO,sector:'',tema,detalle:'',urgencia:'media',estado:'abierto',fecha,historial:[{estado:'abierto',fecha}],comentarios:[]};
+  DB.temasPendientes.unshift(t);guardarYSync(t);inp.value='';renderSeg();toast('Tema anotado');inp.focus();
+}
+function nuevoFab(){if(vista==='seg'&&MODO==='mis'){window.scrollTo({top:0,behavior:'smooth'});$('q-new').focus();}else go('nuevo');}
 
 function renderSeg(){
-  const ab=abiertos(),all=temas();
+  const ab=abiertos(),all=delModo(),mis=MODO==='mis';
+  document.querySelectorAll('.modo button').forEach(b=>b.classList.toggle('on',b.dataset.m===MODO));
+  $('quick').classList.toggle('hidden',!mis);$('pan-suc').classList.toggle('hidden',mis);$('pan-sec').classList.toggle('hidden',mis);
+  $('h-sub').textContent=(mis?'Antigüedad desde que lo anotaste.':'Antigüedad desde la fecha de carga.')+' Tocá un tramo para filtrar.';
   // Hero antigüedad
   $('h-count').innerHTML=ab.length+' <span>'+(ab.length===1?'tema abierto':'temas abiertos')+'</span>';
   const cnt=TRAMOS.map(tr=>ab.filter(t=>tr.test(dias(t))).length);
@@ -494,7 +529,7 @@ function renderSeg(){
   $('split-legend').innerHTML=`<span><i style="background:var(--open)"></i><b>${nA}</b> abiertos</span><span><i style="background:var(--ok)"></i><b>${nT}</b> terminados</span><span><i style="background:var(--cancel)"></i><b>${nC}</b> cancelados</span>`;
 
   // Por sucursal (todas, incluso en cero) y por sector (solo con abiertos)
-  const sucs=[...new Set([...DB.sucursales,...ab.map(t=>t.sucursal).filter(Boolean)])];
+  const sucs=[...new Set([...DB.sucursales,...ab.map(t=>t.sucursal).filter(Boolean)])].filter(s=>s!==MIO);
   const bySuc=sucs.map(s=>[s,ab.filter(t=>t.sucursal===s).length]).sort(ordenar(ORD.suc));
   const secs=[...new Set([...DB.sectoresTP,...ab.map(t=>t.sector).filter(Boolean)])];
   const bySec=secs.map(s=>[s,ab.filter(t=>t.sector===s).length]).filter(x=>x[1]>0).sort(ordenar(ORD.sec));
@@ -519,7 +554,7 @@ function irALista(){if(window.innerWidth<900){const el=$('list-title');const y=e
 
 function filtrados(){
   const q=F.q.trim().toLowerCase();
-  return temas().filter(t=>{
+  return delModo().filter(t=>{
     const e=est(t);
     if(F.estado!=='todos'&&e!==F.estado)return false;
     if(F.sucursal&&t.sucursal!==F.sucursal)return false;
@@ -545,7 +580,7 @@ function renderList(){
   $('list-title').textContent=list.length+(list.length===1?' tema':' temas');
   const c=$('cards');
   if(!list.length){
-    c.innerHTML=temas().length?'<div class="empty">No hay temas con estos filtros.</div>':'<div class="empty">Todavía no cargaste temas.<br><button class="btn btn-primary" onclick="go(\'nuevo\')">Cargar el primero</button></div>';
+    c.innerHTML=delModo().length?'<div class="empty">No hay temas con estos filtros.</div>':MODO==='mis'?'<div class="empty">Todavía no anotaste temas propios.<br>Escribilo arriba y tocá +.</div>':'<div class="empty">Todavía no cargaste temas.<br><button class="btn btn-primary" onclick="go(\'nuevo\')">Cargar el primero</button></div>';
     return;
   }
   c.innerHTML=list.map(t=>{
@@ -556,7 +591,7 @@ function renderList(){
       :`<span class="pill p-${e}">${LABEL[e]}</span>`;
     return `<button class="tcard" onclick="abrirDetalle(${esc(JSON.stringify(t.id))})">
       <span class="strip" style="background:${strip}"></span>
-      <span><div class="tt">${esc(t.tema)}</div><div class="tags"><span class="tag">${esc(t.sucursal)}</span><span class="tag">${esc(t.sector)}</span>${e!=='abierto'?`<span class="tag">${fmtD(fechaCierre(t))}</span>`:''}</div></span>
+      <span><div class="tt">${esc(t.tema)}</div>${esMio(t)&&e==='abierto'?'':`<div class="tags">${esMio(t)?'':`<span class="tag">${esc(t.sucursal)}</span><span class="tag">${esc(t.sector)}</span>`}${e!=='abierto'?`<span class="tag">${fmtD(fechaCierre(t))}</span>`:''}</div>`}</span>
       <span class="side">${side}${nn?`<span class="nnotes"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H7l-3 3z"/></svg>${nn}</span>`:''}</span>
     </button>`;
   }).join('');
@@ -569,7 +604,8 @@ function cerrarDetalle(){detId=null;$('sheet').classList.remove('show');$('scrim
 function renderDetalle(){
   const t=temas().find(x=>x.id===detId);if(!t){cerrarDetalle();return;}
   const e=est(t),d=dias(t);
-  $('d-head').textContent=t.sucursal||'Tema';
+  const mio=esMio(t);
+  $('d-head').textContent=mio?'Mis temas':(t.sucursal||'Tema');
   const notas=[...(t.comentarios||[])].reverse();
   const hist=[...(t.historial||[])].reverse();
   $('d-body').innerHTML=`
@@ -577,9 +613,9 @@ function renderDetalle(){
     <h3 class="d-title">${esc(t.tema)}</h3>
     ${t.detalle?`<p class="d-det">${esc(t.detalle)}</p>`:''}
     <dl class="facts">
-      <div><dt>Sucursal</dt><dd>${esc(t.sucursal)}</dd></div>
-      <div><dt>Sector</dt><dd>${esc(t.sector)}</dd></div>
-      <div><dt>Cargado</dt><dd>${fmtD(t.fecha)}</dd></div>
+      ${mio?'':`<div><dt>Sucursal</dt><dd>${esc(t.sucursal)}</dd></div>
+      <div><dt>Sector</dt><dd>${esc(t.sector)}</dd></div>`}
+      <div><dt>${mio?'Anotado':'Cargado'}</dt><dd>${fmtD(t.fecha)}</dd></div>
       <div><dt>${e==='abierto'?'Abierto hace':'Resuelto en'}</dt><dd ${e==='abierto'?`style="color:${ageColor(d)}"`:''}>${d} ${d===1?'día':'días'}</dd></div>
     </dl>
     ${e==='abierto'?`<div class="actions">
@@ -660,19 +696,21 @@ async function descargarExcel(){
   const D=s=>parseISO(s)||'';
   const filas=[...temas()].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(t=>{
     const e=est(t),d=dias(t);
-    return {'ID':t.id,'Fecha carga':D(t.fecha),'Sucursal':t.sucursal,'Sector':t.sector,'Tema':t.tema,'Detalle':t.detalle||'',
+    return {'ID':t.id,'Tipo':esMio(t)?'Mis temas':'Sucursal','Fecha carga':D(t.fecha),'Sucursal':esMio(t)?'':t.sucursal,'Sector':esMio(t)?'':t.sector,'Tema':t.tema,'Detalle':t.detalle||'',
       'Estado':LABEL[e],'Días abierto':e==='abierto'?d:'','Antigüedad':e==='abierto'?tramo(d).label:'',
       'Fecha cierre':D(fechaCierre(t)),'Días hasta cierre':e==='abierto'?'':d,'Cant. notas':(t.comentarios||[]).length,
       'Notas':(t.comentarios||[]).map(n=>fmtD(n.fecha)+': '+n.texto).join('\n'),'Supervisor':t.supervisor||SUPERVISOR};
   });
-  const notas=[];temas().forEach(t=>(t.comentarios||[]).forEach(n=>notas.push({'ID tema':t.id,'Tema':t.tema,'Sucursal':t.sucursal,'Sector':t.sector,'Fecha nota':D(n.fecha),'Autor':n.autor||'','Nota':n.texto})));
-  const ab=abiertos(),aoa=[['Resumen al '+fmtD(hoyISO())],[],['Estado','Cantidad'],['Abiertos',ab.length],['Terminados',temas().filter(t=>est(t)==='terminado').length],['Cancelados',temas().filter(t=>est(t)==='cancelado').length],[],['Antigüedad de abiertos','Cantidad'],...TRAMOS.map(tr=>[tr.label,ab.filter(t=>tr.test(dias(t))).length]),[],['Abiertos por sucursal','Cantidad'],...DB.sucursales.map(s=>[s,ab.filter(t=>t.sucursal===s).length]),[],['Abiertos por sector','Cantidad'],...DB.sectoresTP.map(s=>[s,ab.filter(t=>t.sector===s).length]).filter(r=>r[1]>0)];
+  const notas=[];temas().forEach(t=>(t.comentarios||[]).forEach(n=>notas.push({'ID tema':t.id,'Tipo':esMio(t)?'Mis temas':'Sucursal','Tema':t.tema,'Sucursal':esMio(t)?'':t.sucursal,'Sector':esMio(t)?'':t.sector,'Fecha nota':D(n.fecha),'Autor':n.autor||'','Nota':n.texto})));
+  const bloque=(titulo,lista)=>{const ab=lista.filter(t=>est(t)==='abierto');return [[titulo],['Estado','Cantidad'],['Abiertos',ab.length],['Terminados',lista.filter(t=>est(t)==='terminado').length],['Cancelados',lista.filter(t=>est(t)==='cancelado').length],[],['Antigüedad de abiertos','Cantidad'],...TRAMOS.map(tr=>[tr.label,ab.filter(t=>tr.test(dias(t))).length]),[]];};
+  const deSuc=temas().filter(t=>!esMio(t)),abS=deSuc.filter(t=>est(t)==='abierto');
+  const aoa=[['Resumen al '+fmtD(hoyISO())],[],...bloque('TEMAS DE SUCURSALES',deSuc),['Abiertos por sucursal','Cantidad'],...DB.sucursales.map(s=>[s,abS.filter(t=>t.sucursal===s).length]),[],['Abiertos por sector','Cantidad'],...DB.sectoresTP.map(s=>[s,abS.filter(t=>t.sector===s).length]).filter(r=>r[1]>0),[],...bloque('MIS TEMAS',temas().filter(esMio))];
   const wb=XLSX.utils.book_new();
   const ws1=XLSX.utils.json_to_sheet(filas,{cellDates:true,dateNF:'dd/mm/yyyy'});
-  ws1['!cols']=[6,12,16,20,40,50,11,12,16,12,15,10,60,12].map(w=>({wch:w}));ws1['!autofilter']={ref:ws1['!ref']};
+  ws1['!cols']=[6,11,12,16,20,40,50,11,12,16,12,15,10,60,12].map(w=>({wch:w}));ws1['!autofilter']={ref:ws1['!ref']};
   XLSX.utils.book_append_sheet(wb,ws1,'Temas');
-  const ws2=XLSX.utils.json_to_sheet(notas.length?notas:[{'ID tema':'','Tema':'','Sucursal':'','Sector':'','Fecha nota':'','Autor':'','Nota':''}],{cellDates:true,dateNF:'dd/mm/yyyy'});
-  ws2['!cols']=[8,40,16,20,12,12,70].map(w=>({wch:w}));if(notas.length)ws2['!autofilter']={ref:ws2['!ref']};
+  const ws2=XLSX.utils.json_to_sheet(notas.length?notas:[{'ID tema':'','Tipo':'','Tema':'','Sucursal':'','Sector':'','Fecha nota':'','Autor':'','Nota':''}],{cellDates:true,dateNF:'dd/mm/yyyy'});
+  ws2['!cols']=[8,11,40,16,20,12,12,70].map(w=>({wch:w}));if(notas.length)ws2['!autofilter']={ref:ws2['!ref']};
   XLSX.utils.book_append_sheet(wb,ws2,'Notas');
   const ws3=XLSX.utils.aoa_to_sheet(aoa);ws3['!cols']=[{wch:28},{wch:10}];
   XLSX.utils.book_append_sheet(wb,ws3,'Resumen');
